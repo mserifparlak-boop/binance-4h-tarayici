@@ -26,7 +26,7 @@ table{width:100%;border-collapse:collapse;margin-top:10px;font-size:13px}th,td{t
 <body><main>
 <div class="top"><div><h1>Binance 4H Tarayıcı</h1><div class="sub">USDT-M Perpetual · Tamamlanmış 4 saatlik mumlar</div></div><button id="scan">Taramayı başlat</button></div>
 <section class="panel">
-<div class="filters"><span class="chip">4H kapanış &gt; EMA 50</span><span class="chip">Stoch RSI K ≤ 40</span><span class="chip">Yalnızca USDT-M</span></div>
+<div class="filters"><span class="chip">4H kapanış &gt; EMA 50</span><span class="chip">Stoch RSI K < 20</span><span class="chip">Yalnızca USDT-M</span></div>
 <div id="status">Başlamak için “Taramayı başlat” düğmesine dokun.</div><div class="progress"><div class="bar" id="bar"></div></div>
 <div class="stats"><div class="stat"><b id="total">—</b><span>İncelenen parite</span></div><div class="stat"><b id="matched">—</b><span>Filtreye uyan</span></div><div class="stat"><b id="updated">—</b><span>Son tarama</span></div></div>
 <div class="searchrow"><input id="search" placeholder="Coin ara (ör. BTC, ETH)"><button id="refresh" disabled>Yenile</button></div>
@@ -48,7 +48,7 @@ async function scan(){const btn=$('scan');btn.disabled=true;$('refresh').disable
 try{
 const info=await getJson(API+'/fapi/v1/exchangeInfo');const symbols=info.symbols.filter(s=>s.status==='TRADING'&&s.contractType==='PERPETUAL'&&s.quoteAsset==='USDT').map(s=>s.symbol);
 $('total').textContent=symbols.length;$('status').textContent=symbols.length+' parite taranıyor. Bu işlem birkaç dakika sürebilir.';
-let done=0,found=[],idx=0,workers=Array.from({length:8},async()=>{while(idx<symbols.length){let sym=symbols[idx++];try{let data=await getJson(API+'/fapi/v1/klines?symbol='+sym+'&interval=4h&limit=100');if(data.length>=60){let closed=data.slice(0,-1),closes=closed.map(x=>+x[4]),close=closes.at(-1),e=ema(closes,50),k=stochK(closes);if(k!==null&&close>e&&k<=40)found.push({symbol:sym,close,ema:e,k})}}catch(e){console.warn(sym,e)}done++;if(done%5===0||done===symbols.length){$('bar').style.width=(done/symbols.length*100).toFixed(1)+'%';$('status').textContent='Taranıyor: '+done+' / '+symbols.length+' parite · Eşleşen: '+found.length}}});
+let done=0,found=[],idx=0,workers=Array.from({length:8},async()=>{while(idx<symbols.length){let sym=symbols[idx++];try{let data=await getJson(API+'/fapi/v1/klines?symbol='+sym+'&interval=4h&limit=100');if(data.length>=60){let closed=data.slice(0,-1),closes=closed.map(x=>+x[4]),close=closes.at(-1),e=ema(closes,50),k=stochK(closes);if(k!==null&&close>e&&k<20)found.push({symbol:sym,close,ema:e,k})}}catch(e){console.warn(sym,e)}done++;if(done%5===0||done===symbols.length){$('bar').style.width=(done/symbols.length*100).toFixed(1)+'%';$('status').textContent='Taranıyor: '+done+' / '+symbols.length+' parite · Eşleşen: '+found.length}}});
 await Promise.all(workers);matches=found.sort((a,b)=>a.k-b.k);$('matched').textContent=matches.length;$('updated').textContent=new Date().toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'});$('status').textContent='Tarama tamamlandı. '+matches.length+' parite iki koşulu da sağlıyor.';render();$('refresh').disabled=false;
 }catch(e){$('status').textContent='Hata: '+e.message+'. Binance API erişimini kontrol edip tekrar deneyin.';$('rows').innerHTML='<tr><td colspan="4" class="empty">Veri alınamadı.</td></tr>'}
 finally{btn.disabled=false}}

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#101827">
-<title>Binance 4H Tarayıcı</title>
+<title>Binance Günlük Tarayıcı</title>
 <style>
 :root{color-scheme:dark;--bg:#0b1220;--panel:#121d2e;--line:#26364c;--muted:#9aabc1;--green:#35d49a;--red:#ff7185;--blue:#77aaff}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:#eef4fc;font:15px system-ui,-apple-system,Segoe UI,sans-serif}
@@ -24,14 +24,14 @@ table{width:100%;border-collapse:collapse;margin-top:10px;font-size:13px}th,td{t
 </style>
 </head>
 <body><main>
-<div class="top"><div><h1>Binance 4H Tarayıcı</h1><div class="sub">USDT-M Perpetual · Tamamlanmış 4 saatlik mumlar</div></div><button id="scan">Taramayı başlat</button></div>
+<div class="top"><div><h1>Binance Günlük Tarayıcı</h1><div class="sub">USDT-M Perpetual · Tamamlanmış günlük mumlar</div></div><button id="scan">Taramayı başlat</button></div>
 <section class="panel">
-<div class="filters"><span class="chip">4H kapanış &gt; EMA 50</span><span class="chip">Stoch RSI K < 20</span><span class="chip">Yalnızca USDT-M</span></div>
+<div class="filters"><span class="chip">Günlük kapanış &gt; EMA 50</span><span class="chip">Stoch RSI K < 20</span><span class="chip">Yalnızca USDT-M</span></div>
 <div id="status">Başlamak için “Taramayı başlat” düğmesine dokun.</div><div class="progress"><div class="bar" id="bar"></div></div>
 <div class="stats"><div class="stat"><b id="total">—</b><span>İncelenen parite</span></div><div class="stat"><b id="matched">—</b><span>Filtreye uyan</span></div><div class="stat"><b id="updated">—</b><span>Son tarama</span></div></div>
 <div class="searchrow"><input id="search" placeholder="Coin ara (ör. BTC, ETH)"><button id="refresh" disabled>Yenile</button></div>
-<div style="overflow-x:auto"><table><thead><tr><th>Parite</th><th>4H kapanış</th><th>EMA 50</th><th>Stoch K</th></tr></thead><tbody id="rows"><tr><td colspan="4" class="empty">Henüz tarama yapılmadı.</td></tr></tbody></table></div>
-<p class="note">Hesaplama son tamamlanmış 4 saatlik mum üzerinden yapılır. EMA(50), kapanış fiyatlarından; Stoch RSI(14,14,3,3) K değeri RSI(14) ve 3 mumluk K ortalamasıyla hesaplanır. Bu tarama teknik filtreleme aracıdır, al/sat tavsiyesi değildir. API erişimi Binance'in herkese açık piyasa verilerine bağlıdır.</p>
+<div style="overflow-x:auto"><table><thead><tr><th>Parite</th><th>Günlük kapanış</th><th>EMA 50</th><th>Stoch K</th></tr></thead><tbody id="rows"><tr><td colspan="4" class="empty">Henüz tarama yapılmadı.</td></tr></tbody></table></div>
+<p class="note">Hesaplama son tamamlanmış günlük mum üzerinden yapılır. EMA(50), kapanış fiyatlarından; Stoch RSI(14,14,3,3) K değeri RSI(14) ve 3 mumluk K ortalamasıyla hesaplanır. Bu tarama teknik filtreleme aracıdır, al/sat tavsiyesi değildir. API erişimi Binance'in herkese açık piyasa verilerine bağlıdır.</p>
 </section></main>
 <script>
 const API='https://fapi.binance.com';
@@ -48,7 +48,7 @@ async function scan(){const btn=$('scan');btn.disabled=true;$('refresh').disable
 try{
 const info=await getJson(API+'/fapi/v1/exchangeInfo');const symbols=info.symbols.filter(s=>s.status==='TRADING'&&s.contractType==='PERPETUAL'&&s.quoteAsset==='USDT').map(s=>s.symbol);
 $('total').textContent=symbols.length;$('status').textContent=symbols.length+' parite taranıyor. Bu işlem birkaç dakika sürebilir.';
-let done=0,found=[],idx=0,workers=Array.from({length:8},async()=>{while(idx<symbols.length){let sym=symbols[idx++];try{let data=await getJson(API+'/fapi/v1/klines?symbol='+sym+'&interval=4h&limit=100');if(data.length>=60){let closed=data.slice(0,-1),closes=closed.map(x=>+x[4]),close=closes.at(-1),e=ema(closes,50),k=stochK(closes);if(k!==null&&close>e&&k<20)found.push({symbol:sym,close,ema:e,k})}}catch(e){console.warn(sym,e)}done++;if(done%5===0||done===symbols.length){$('bar').style.width=(done/symbols.length*100).toFixed(1)+'%';$('status').textContent='Taranıyor: '+done+' / '+symbols.length+' parite · Eşleşen: '+found.length}}});
+let done=0,found=[],idx=0,workers=Array.from({length:8},async()=>{while(idx<symbols.length){let sym=symbols[idx++];try{let data=await getJson(API+'/fapi/v1/klines?symbol='+sym+'&interval=1d&limit=100');if(data.length>=60){let closed=data.slice(0,-1),closes=closed.map(x=>+x[4]),close=closes.at(-1),e=ema(closes,50),k=stochK(closes);if(k!==null&&close>e&&k<20)found.push({symbol:sym,close,ema:e,k})}}catch(e){console.warn(sym,e)}done++;if(done%5===0||done===symbols.length){$('bar').style.width=(done/symbols.length*100).toFixed(1)+'%';$('status').textContent='Taranıyor: '+done+' / '+symbols.length+' parite · Eşleşen: '+found.length}}});
 await Promise.all(workers);matches=found.sort((a,b)=>a.k-b.k);$('matched').textContent=matches.length;$('updated').textContent=new Date().toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'});$('status').textContent='Tarama tamamlandı. '+matches.length+' parite iki koşulu da sağlıyor.';render();$('refresh').disabled=false;
 }catch(e){$('status').textContent='Hata: '+e.message+'. Binance API erişimini kontrol edip tekrar deneyin.';$('rows').innerHTML='<tr><td colspan="4" class="empty">Veri alınamadı.</td></tr>'}
 finally{btn.disabled=false}}

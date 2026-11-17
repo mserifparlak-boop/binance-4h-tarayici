@@ -1,0 +1,17 @@
+{
+  "name": "Stoch RSI + EMA Tarayıcı",
+  "short_name": "Stoch+EMA",
+  "start_url": "./stoch-ema.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0b1220",
+  "theme_color": "#101827",
+  "icons": [
+    {
+      "src": "./stoch-ema-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

@@ -4,7 +4,7 @@ Mobil uyumlu, tarayıcıda çalışan Binance USDT-M perpetual tarayıcısı.
 
 ## Filtreler
 - Son tamamlanmış 4 saatlik mum kapanışı EMA(50) üzerinde.
-- Stoch RSI K (14,14,3,3) değeri 40 veya altında.
+- Stoch RSI K (14,14,3,3) değeri 20'nin altında.
 - Yalnızca TRADING durumundaki USDT kotasyonlu perpetual sözleşmeler.
 
 ## GitHub Pages ile yayınlama

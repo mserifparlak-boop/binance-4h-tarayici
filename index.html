@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#101827">
+<title>Binance 4H Tarayıcı</title>
+<style>
+:root{color-scheme:dark;--bg:#0b1220;--panel:#121d2e;--line:#26364c;--muted:#9aabc1;--green:#35d49a;--red:#ff7185;--blue:#77aaff}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:#eef4fc;font:15px system-ui,-apple-system,Segoe UI,sans-serif}
+main{max-width:900px;margin:auto;padding:20px 14px 40px}.top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+h1{font-size:23px;margin:0 0 5px}.sub{color:var(--muted);font-size:13px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:15px;padding:15px;margin-top:16px}
+.filters{display:flex;gap:9px;flex-wrap:wrap}.chip{background:#1a2940;border:1px solid #30435e;padding:8px 11px;border-radius:9px;font-size:13px}
+button{background:var(--green);color:#062318;border:0;border-radius:10px;padding:11px 16px;font-weight:750;font-size:14px}
+button:disabled{opacity:.55}#status{color:var(--muted);margin-top:12px;font-size:13px}.progress{height:6px;background:#26364c;border-radius:10px;overflow:hidden;margin-top:10px}.bar{height:100%;width:0;background:var(--green);transition:width .2s}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px}.stat{background:#0d1726;border-radius:10px;padding:11px}.stat b{display:block;font-size:21px}.stat span{font-size:11px;color:var(--muted)}
+input{background:#0d1726;color:white;border:1px solid var(--line);border-radius:9px;padding:10px;min-width:0;flex:1}
+.searchrow{display:flex;gap:8px;margin-top:13px}
+table{width:100%;border-collapse:collapse;margin-top:10px;font-size:13px}th,td{text-align:right;padding:11px 7px;border-bottom:1px solid var(--line);white-space:nowrap}th{color:var(--muted);font-weight:600}th:first-child,td:first-child{text-align:left}
+.coin{font-weight:750}.positive{color:var(--green)}.negative{color:var(--red)}.empty{text-align:center;color:var(--muted);padding:25px 5px}
+.note{color:var(--muted);font-size:12px;line-height:1.55;margin-top:13px}
+@media(max-width:520px){main{padding:16px 10px 30px}h1{font-size:20px}.panel{padding:12px}table{font-size:12px}th,td{padding:10px 5px}.stats{gap:5px}.stat{padding:9px}.stat b{font-size:18px}}
+</style>
+</head>
+<body><main>
+<div class="top"><div><h1>Binance 4H Tarayıcı</h1><div class="sub">USDT-M Perpetual · Tamamlanmış 4 saatlik mumlar</div></div><button id="scan">Taramayı başlat</button></div>
+<section class="panel">
+<div class="filters"><span class="chip">4H kapanış &gt; EMA 50</span><span class="chip">Stoch RSI K ≤ 40</span><span class="chip">Yalnızca USDT-M</span></div>
+<div id="status">Başlamak için “Taramayı başlat” düğmesine dokun.</div><div class="progress"><div class="bar" id="bar"></div></div>
+<div class="stats"><div class="stat"><b id="total">—</b><span>İncelenen parite</span></div><div class="stat"><b id="matched">—</b><span>Filtreye uyan</span></div><div class="stat"><b id="updated">—</b><span>Son tarama</span></div></div>
+<div class="searchrow"><input id="search" placeholder="Coin ara (ör. BTC, ETH)"><button id="refresh" disabled>Yenile</button></div>
+<div style="overflow-x:auto"><table><thead><tr><th>Parite</th><th>4H kapanış</th><th>EMA 50</th><th>Stoch K</th></tr></thead><tbody id="rows"><tr><td colspan="4" class="empty">Henüz tarama yapılmadı.</td></tr></tbody></table></div>
+<p class="note">Hesaplama son tamamlanmış 4 saatlik mum üzerinden yapılır. EMA(50), kapanış fiyatlarından; Stoch RSI(14,14,3,3) K değeri RSI(14) ve 3 mumluk K ortalamasıyla hesaplanır. Bu tarama teknik filtreleme aracıdır, al/sat tavsiyesi değildir. API erişimi Binance'in herkese açık piyasa verilerine bağlıdır.</p>
+</section></main>
+<script>
+const API='https://fapi.binance.com';
+const $=id=>document.getElementById(id);
+let matches=[];
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+function ema(values,period){const a=2/(period+1);let v=values.slice(0,period).reduce((s,x)=>s+x,0)/period;for(let i=period;i<values.length;i++)v=values[i]*a+v*(1-a);return v}
+function rsiSeries(c,period=14){let out=Array(c.length).fill(null),gain=0,loss=0;for(let i=1;i<=period;i++){let d=c[i]-c[i-1];gain+=Math.max(d,0);loss+=Math.max(-d,0)}let ag=gain/period,al=loss/period;out[period]=al===0?100:100-100/(1+ag/al);for(let i=period+1;i<c.length;i++){let d=c[i]-c[i-1];ag=(ag*(period-1)+Math.max(d,0))/period;al=(al*(period-1)+Math.max(-d,0))/period;out[i]=al===0?100:100-100/(1+ag/al)}return out}
+function stochK(closes){const r=rsiSeries(closes),raw=[];for(let i=27;i<r.length;i++){let w=r.slice(i-13,i+1);if(w.some(x=>x===null))continue;let lo=Math.min(...w),hi=Math.max(...w);raw.push(hi===lo?0:(r[i]-lo)/(hi-lo)*100)}if(raw.length<3)return null;return (raw.at(-1)+raw.at(-2)+raw.at(-3))/3}
+async function getJson(url){let res=await fetch(url);if(!res.ok)throw Error('HTTP '+res.status);return res.json()}
+function fmt(x){return Number(x).toLocaleString('en-US',{maximumFractionDigits:8})}
+function render(){let q=$('search').value.trim().toUpperCase();let list=matches.filter(x=>x.symbol.includes(q));$('rows').innerHTML=list.length?list.map(x=>'<tr><td class="coin">'+x.symbol.replace('USDT','')+'<span style="color:var(--muted);font-weight:400">/USDT</span></td><td>'+fmt(x.close)+'</td><td>'+fmt(x.ema)+'</td><td class="positive">'+x.k.toFixed(2)+'</td></tr>').join(''):'<tr><td colspan="4" class="empty">Bu aramayla eşleşen sonuç yok.</td></tr>'}
+async function scan(){const btn=$('scan');btn.disabled=true;$('refresh').disabled=true;matches=[];$('rows').innerHTML='<tr><td colspan="4" class="empty">Piyasa listesi alınıyor…</td></tr>';$('status').textContent='Binance USDT-M pariteleri alınıyor…';$('bar').style.width='0%';$('total').textContent='—';$('matched').textContent='—';
+try{
+const info=await getJson(API+'/fapi/v1/exchangeInfo');const symbols=info.symbols.filter(s=>s.status==='TRADING'&&s.contractType==='PERPETUAL'&&s.quoteAsset==='USDT').map(s=>s.symbol);
+$('total').textContent=symbols.length;$('status').textContent=symbols.length+' parite taranıyor. Bu işlem birkaç dakika sürebilir.';
+let done=0,found=[],idx=0,workers=Array.from({length:8},async()=>{while(idx<symbols.length){let sym=symbols[idx++];try{let data=await getJson(API+'/fapi/v1/klines?symbol='+sym+'&interval=4h&limit=100');if(data.length>=60){let closed=data.slice(0,-1),closes=closed.map(x=>+x[4]),close=closes.at(-1),e=ema(closes,50),k=stochK(closes);if(k!==null&&close>e&&k<=40)found.push({symbol:sym,close,ema:e,k})}}catch(e){console.warn(sym,e)}done++;if(done%5===0||done===symbols.length){$('bar').style.width=(done/symbols.length*100).toFixed(1)+'%';$('status').textContent='Taranıyor: '+done+' / '+symbols.length+' parite · Eşleşen: '+found.length}}});
+await Promise.all(workers);matches=found.sort((a,b)=>a.k-b.k);$('matched').textContent=matches.length;$('updated').textContent=new Date().toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'});$('status').textContent='Tarama tamamlandı. '+matches.length+' parite iki koşulu da sağlıyor.';render();$('refresh').disabled=false;
+}catch(e){$('status').textContent='Hata: '+e.message+'. Binance API erişimini kontrol edip tekrar deneyin.';$('rows').innerHTML='<tr><td colspan="4" class="empty">Veri alınamadı.</td></tr>'}
+finally{btn.disabled=false}}
+$('scan').addEventListener('click',scan);$('refresh').addEventListener('click',scan);$('search').addEventListener('input',render);
+</script></body></html>

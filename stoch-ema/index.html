@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#101827"><meta name="description" content="Binance USDT-M günlük Stoch RSI kesişimi ve 1 saatlik EMA tarayıcısı">
+<link rel="manifest" href="./manifest.json"><link rel="icon" href="./icon.svg" type="image/svg+xml">
+<title>Stoch RSI + EMA Tarayıcı</title>
+<style>
+:root{color-scheme:dark;--bg:#0b1220;--panel:#131e30;--line:#26354b;--muted:#93a4ba;--green:#31d49a;--blue:#70a7ff;--red:#ff7b87}
+*{box-sizing:border-box}body{margin:0;background:linear-gradient(160deg,#101d31,#090f1b 55%);color:#edf4ff;font:15px system-ui,-apple-system,Segoe UI,sans-serif;padding:20px 14px 40px}.wrap{max-width:850px;margin:auto}header{margin:6px 0 18px}h1{font-size:24px;line-height:1.2;margin:0 0 7px}.sub{color:var(--muted);font-size:13px}.panel{background:#131e30eF;border:1px solid var(--line);border-radius:18px;padding:16px;margin:12px 0;box-shadow:0 12px 35px #0003}.rules{display:grid;grid-template-columns:1fr 1fr;gap:10px}.rule{background:#0e1726;border:1px solid var(--line);border-radius:13px;padding:12px}.rule b{display:block;margin-bottom:6px}.rule span{color:var(--muted);font-size:13px;line-height:1.5}.actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:14px}button{border:0;border-radius:12px;padding:12px 16px;font-weight:700;font-size:14px;background:var(--green);color:#062217}button.secondary{background:#26364d;color:#eaf2ff}button:disabled{opacity:.5}.status{margin-top:12px;color:var(--muted);font-size:13px;line-height:1.5}.bar{height:7px;background:#26364d;border-radius:10px;overflow:hidden;margin-top:9px}.bar>i{display:block;height:100%;width:0;background:var(--green);transition:width .2s}.stats{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0}.stat{background:#0e1726;border:1px solid var(--line);border-radius:12px;padding:9px 12px;min-width:100px}.stat strong{display:block;font-size:19px}.stat small{color:var(--muted)}input{width:100%;padding:12px;border-radius:11px;border:1px solid var(--line);background:#0e1726;color:white;font-size:15px;margin:5px 0 12px}.tablewrap{overflow:auto}table{width:100%;border-collapse:collapse;min-width:630px;font-size:13px}th,td{text-align:right;padding:11px 8px;border-bottom:1px solid var(--line);white-space:nowrap}th{color:var(--muted);font-weight:600}th:first-child,td:first-child{text-align:left}td strong{color:#fff}.pill{display:inline-block;border-radius:20px;padding:4px 8px;background:#103d35;color:var(--green);font-size:11px}.empty{text-align:center;padding:26px 10px;color:var(--muted)}.note{color:var(--muted);font-size:12px;line-height:1.6}.install{display:none}.foot{margin-top:15px;color:var(--muted);font-size:11px}
+@media(max-width:560px){body{padding:15px 10px 30px}h1{font-size:21px}.rules{grid-template-columns:1fr}.panel{padding:13px}.actions button{flex:1}}
+</style></head>
+<body><main class="wrap">
+<header><h1>📊 Stoch RSI + EMA Tarayıcı</h1><div class="sub">Binance USDT-M Perpetual · Günlük sinyal + 1 saatlik trend filtresi</div></header>
+<section class="panel"><div class="rules">
+<div class="rule"><b>① Günlük Stoch RSI</b><span>K, D çizgisini aşağıdan yukarı kesecek ve kesişim mumundaki K değeri 30'un altında olacak. (14,14,3,3)</span></div>
+<div class="rule"><b>② 1 saatlik EMA</b><span>Son tamamlanmış 1 saatlik mum kapanışı EMA 50'nin üzerinde ve EMA 200'ün altında olacak.</span></div>
+</div><div class="actions"><button id="scan">Taramayı başlat</button><button id="stop" class="secondary" disabled>Durdur</button><button id="install" class="secondary install">Ana ekrana yükle</button></div>
+<div class="status" id="status">Tarama henüz başlatılmadı. İlk tarama, parite sayısına bağlı olarak birkaç dakika sürebilir.</div><div class="bar"><i id="progress"></i></div>
+<div class="stats"><div class="stat"><strong id="count">—</strong><small>Eşleşen coin</small></div><div class="stat"><strong id="checked">0</strong><small>Kontrol edilen</small></div><div class="stat"><strong id="updated">—</strong><small>Son güncelleme</small></div></div>
+</section>
+<section class="panel"><label for="search" class="sub">Sonuçlarda coin ara</label><input id="search" placeholder="Örn. BTCUSDT"><div class="tablewrap"><table><thead><tr><th>Parite</th><th>Fiyat</th><th>Günlük K</th><th>Günlük D</th><th>1s EMA 50</th><th>1s EMA 200</th></tr></thead><tbody id="rows"><tr><td colspan="6" class="empty">Henüz sonuç yok.</td></tr></tbody></table></div></section>
+<p class="note">Hesaplama: RSI(14), Stoch RSI(14), K=3 mum SMA, D=3 mum SMA. Yalnızca kapanmış mumlar kullanılır. EMA'lar kapanış fiyatlarından hesaplanır. Sinyal, kapanmış son günlük mumda K'nın D'yi yukarı kesmesi ve K&lt;30 olmasıdır.</p>
+<p class="note">Bu araç yalnızca teknik tarama yapar; alım-satım emri vermez ve yatırım tavsiyesi değildir. Binance herkese açık API'sine erişim, ağ ve borsa limitlerine bağlıdır.</p>
+<div class="foot">Otomatik yenileme: 5 dakikada bir. Uygulama açıkken çalışır; arka planda telefon işletim sistemi yenilemeyi durdurabilir.</div>
+</main>
+<script>
+const API='https://fapi.binance.com';
+const $=id=>document.getElementById(id);
+let stopped=false,running=false,timer=null,results=[];
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+function ema(values,period){if(values.length<period)return NaN;const k=2/(period+1);let v=values.slice(0,period).reduce((a,b)=>a+b,0)/period;for(let i=period;i<values.length;i++)v=values[i]*k+v*(1-k);return v}
+function rsi(values,period=14){const out=Array(values.length).fill(null);let gain=0,loss=0;for(let i=1;i<=period;i++){const d=values[i]-values[i-1];if(d>0)gain+=d;else loss-=d}let ag=gain/period,al=loss/period;out[period]=al===0?100:100-100/(1+ag/al);for(let i=period+1;i<values.length;i++){const d=values[i]-values[i-1];ag=(ag*(period-1)+Math.max(d,0))/period;al=(al*(period-1)+Math.max(-d,0))/period;out[i]=al===0?100:100-100/(1+ag/al)}return out}
+function stoch(values){const rs=rsi(values),raw=Array(values.length).fill(null),k=Array(values.length).fill(null),d=Array(values.length).fill(null);for(let i=0;i<values.length;i++){if(rs[i]==null||i<27)continue;const w=rs.slice(i-13,i+1);if(w.some(x=>x==null))continue;const lo=Math.min(...w),hi=Math.max(...w);raw[i]=hi===lo?0:(rs[i]-lo)/(hi-lo)*100}
+for(let i=0;i<values.length;i++){if(i>=2&&raw.slice(i-2,i+1).every(x=>x!=null))k[i]=(raw[i]+raw[i-1]+raw[i-2])/3}
+for(let i=0;i<values.length;i++){if(i>=2&&k.slice(i-2,i+1).every(x=>x!=null))d[i]=(k[i]+k[i-1]+k[i-2])/3}
+return {k,d}}
+async function getJSON(path){const res=await fetch(API+path);if(res.status===429||res.status===418)throw new Error('Binance hız sınırı. Biraz bekleyip yeniden deneyin.');if(!res.ok)throw new Error('Binance API yanıtı: '+res.status);return res.json()}
+async function scanOne(symbol){const [day,hour]=await Promise.all([getJSON('/fapi/v1/klines?symbol='+symbol+'&interval=1d&limit=100'),getJSON('/fapi/v1/klines?symbol='+symbol+'&interval=1h&limit=250')]);
+const dc=day.slice(0,-1).map(x=>+x[4]),hc=hour.slice(0,-1).map(x=>+x[4]);if(dc.length<40||hc.length<200)return null;
+const sd=stoch(dc),n=sd.k.length-1,p=n-1,k=sd.k[n],d=sd.d[n],pk=sd.k[p],pd=sd.d[p];
+if(![k,d,pk,pd].every(Number.isFinite)||!(pk<=pd&&k> d&&k<30))return null;
+const e50=ema(hc,50),e200=ema(hc,200),price=hc[hc.length-1];if(!(price>e50&&price<e200))return null;
+return {symbol,price,k,d,e50,e200}}
+function render(){const q=$('search').value.trim().toUpperCase();const list=results.filter(x=>x.symbol.includes(q));$('count').textContent=results.length;$('rows').innerHTML=list.length?list.map(x=>'<tr><td><strong>'+x.symbol+'</strong> <span class="pill">EŞLEŞTİ</span></td><td>'+fmt(x.price)+'</td><td>'+x.k.toFixed(2)+'</td><td>'+x.d.toFixed(2)+'</td><td>'+fmt(x.e50)+'</td><td>'+fmt(x.e200)+'</td></tr>').join(''):'<tr><td colspan="6" class="empty">'+(results.length?'Aramana uygun coin yok.':'Şu an bütün koşulları sağlayan coin bulunamadı.')+'</td></tr>'}
+function fmt(v){return Number(v).toLocaleString('en-US',{maximumSignificantDigits:8})}
+async function runScan(){if(running)return;running=true;stopped=false;$('scan').disabled=true;$('stop').disabled=false;results=[];render();$('checked').textContent='0';$('progress').style.width='0%';try{
+$('status').textContent='Binance vadeli işlem pariteleri alınıyor…';const info=await getJSON('/fapi/v1/exchangeInfo');const symbols=info.symbols.filter(s=>s.status==='TRADING'&&s.contractType==='PERPETUAL'&&s.quoteAsset==='USDT').map(s=>s.symbol);let done=0,found=[];
+$('status').textContent=symbols.length+' parite taranacak. Lütfen bekleyin…';
+for(let i=0;i<symbols.length;i+=5){if(stopped)break;const batch=symbols.slice(i,i+5);const vals=await Promise.all(batch.map(async s=>{try{return await scanOne(s)}catch(e){if(String(e).includes('hız sınırı'))throw e;return null}}));found.push(...vals.filter(Boolean));done+=batch.length;$('checked').textContent=done;$('progress').style.width=(done/symbols.length*100)+'%';results=found.slice().sort((a,b)=>a.k-b.k);render();$('status').textContent=done+'/'+symbols.length+' parite kontrol edildi.';await sleep(180)}
+if(!stopped){$('updated').textContent=new Date().toLocaleTimeString('tr-TR');$('status').textContent='Tarama tamamlandı. '+found.length+' eşleşme bulundu. Sonraki tarama 5 dakika sonra.';}}
+catch(e){$('status').textContent='Tarama hatası: '+e.message+' Sayfayı yenileyip tekrar deneyin.'}
+finally{running=false;$('scan').disabled=false;$('stop').disabled=true;if(!stopped){clearTimeout(timer);timer=setTimeout(runScan,300000)}}}
+$('scan').addEventListener('click',runScan);$('stop').addEventListener('click',()=>{stopped=true;$('status').textContent='Durdurma isteği alındı…';$('stop').disabled=true});$('search').addEventListener('input',render);
+let installPrompt=null;window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installPrompt=e;$('install').style.display='inline-block'});$('install').addEventListener('click',async()=>{if(!installPrompt)return;installPrompt.prompt();await installPrompt.userChoice;installPrompt=null;$('install').style.display='none'});
+if('serviceWorker'in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('./sw.js').catch(()=>{});
+</script></body></html>
